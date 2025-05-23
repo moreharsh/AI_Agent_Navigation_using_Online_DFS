@@ -6,6 +6,7 @@ public class PlayerMovement : MonoBehaviour
 {
     public float movementSpeed = 10f;
     public NavMeshAgent agent;
+    public Animator animator;
 
     private const float centerRayDistance = 5f;
     private const float forwardRayDistance = 1.5f;
@@ -14,21 +15,29 @@ public class PlayerMovement : MonoBehaviour
     private enum State { Exploring, Backtracking, Ideal }
     private State currentState = State.Exploring;
 
-    private Stack<(Vector3 position, int angle)> pathStack = new Stack<(Vector3, int)>();
+    private Stack<(Vector3 position, float original_direction, int angle)> pathStack = new Stack<(Vector3, float, int)>();
 
-    private (Vector3 position, int angle) backtrackto;
+    private (Vector3 position, float original_direction, int angle) backtrackto;
 
-    
+    private bool is_backtracking = false;
+
+    private Vector3 backtrack_position;
+
     private bool left_open = false;
     private bool right_open = false;
-    private bool is_backtracking = false;
     private int left_open_counter = 0;
     private int right_open_counter = 0;
     private Vector3 open_left_position, open_right_position;
 
-    void Start() 
-    { 
-        pathStack.Push((transform.position, 0));
+    private bool just_turned_left = false;
+    private bool just_turned_right = false;
+
+    private Vector3 start_position;
+
+    void Start()
+    {
+        pathStack.Push((transform.position, transform.rotation.eulerAngles.y, 0));
+        start_position = transform.position;
     }
 
     void Update()
@@ -40,24 +49,42 @@ public class PlayerMovement : MonoBehaviour
                 NavigateMaze();
                 break;
             case State.Backtracking:
-                if(pathStack.Count > 0 && !is_backtracking)
+                if (Vector3.Distance(transform.position, start_position) <= 1.0f)
                 {
-                    backtrackto = pathStack.Pop(); 
-                    agent.updateRotation=false;
-                    agent.speed = 10f;
+                    currentState = State.Ideal;
+                }
+
+                if (pathStack.Count > 0 && !is_backtracking)
+                {
+                    backtrackto = pathStack.Pop();
+
+
+                    agent.speed = movementSpeed;
                     is_backtracking = true;
+
+                    just_turned_left = true;
+                    just_turned_right = true;
+
+                    agent.updateRotation = true;
                     agent.SetDestination(backtrackto.position);
                 }
 
-                if(is_backtracking && Vector3.Distance(transform.position, backtrackto.position) < 0.5f)
+                if (is_backtracking && Vector3.Distance(transform.position, backtrackto.position) < 0.5f)
                 {
                     currentState = State.Exploring;
+
+                    agent.updateRotation = true;
+                    transform.rotation = Quaternion.Euler(0, backtrackto.original_direction, 0);
                     RotateAgent(backtrackto.angle);
+                    agent.updateRotation = false;
+
                     agent.speed = 0f;
                     is_backtracking = false;
                 }
                 break;
+
             case State.Ideal:
+                animator.SetBool("Stop", true);
                 break;
         }
     }
@@ -76,75 +103,95 @@ public class PlayerMovement : MonoBehaviour
         bool isRightBlocked = Physics.Raycast(rayRight, out RaycastHit hitRight, sideRayDistance) &&
                                 hitRight.transform.CompareTag("Wall");
 
-        if(isForwardBlocked)
+        if (isForwardBlocked)
         {
-            if(isRightBlocked)
+            if (!isRightBlocked && !isLeftBlocked)
             {
-                if(isLeftBlocked)
+                if (transform.rotation.eulerAngles.y == 270)
+                {
+                    pathStack.Push((transform.position, -90, -90));
+                }
+                else
+                {
+                    pathStack.Push((transform.position, transform.rotation.eulerAngles.y, -90));
+                }
+            }
+
+            if (isRightBlocked)
+            {
+                if (isLeftBlocked)
                 {
                     currentState = State.Backtracking;
                 }
                 else
                 {
-                    agent.updateRotation=true;
+                    agent.updateRotation = true;
                     RotateAgent(-90);
-                    left_open_counter += 1;
-                    left_open = false;
-                    right_open = false;
-                    agent.updateRotation=false;
+                    just_turned_left = true;
+                    agent.updateRotation = false;
                 }
             }
             else
             {
-                agent.updateRotation=true;
+                agent.updateRotation = true;
                 RotateAgent(90);
-                right_open_counter += 1;
-                left_open = false;
-                right_open = false;
-                agent.updateRotation=false;
-            }
-            if(!isRightBlocked && !isLeftBlocked)
-            {
-                pathStack.Push((transform.position, -90));
+                just_turned_right = true;
+                agent.updateRotation = false;
             }
         }
         else
         {
             transform.Translate(Vector3.forward * movementSpeed * Time.deltaTime);
-            
+
             if (Physics.Raycast(rayLeft, sideRayDistance))
             {
-                if(left_open && (currentState == State.Exploring) && left_open_counter == 1)
+                if (left_open && (currentState == State.Exploring) && left_open_counter == 1)
                 {
-                    Vector3 mid_point = (open_left_position + position)/2;
-                    pathStack.Push((mid_point, -90));
+                    Vector3 mid_point = (open_left_position + position) / 2;
+                    if (transform.rotation.eulerAngles.y == 270)
+                    {
+                        pathStack.Push((mid_point, -90, -90));
+                    }
+                    else
+                    {
+                        pathStack.Push((mid_point, transform.rotation.eulerAngles.y, -90));
+                    }
                     left_open = false;
                     left_open_counter = 0;
                 }
+                just_turned_left = false;
             }
             else
             {
-                if(!left_open && (currentState == State.Exploring))
+                if (!left_open && (currentState == State.Exploring) && !Physics.Raycast(rayForward, sideRayDistance) && !just_turned_left)
                 {
                     open_left_position = position;
                     left_open = true;
                     left_open_counter += 1;
                 }
             }
-            
+
             if (Physics.Raycast(rayRight, sideRayDistance))
             {
-                if(right_open && (currentState == State.Exploring) && right_open_counter == 1)
+                if (right_open && (currentState == State.Exploring) && right_open_counter == 1)
                 {
-                    Vector3 mid_point = (open_right_position + position)/2;
-                    pathStack.Push((mid_point, 90));                    
+                    Vector3 mid_point = (open_right_position + position) / 2;
+                    if (transform.rotation.eulerAngles.y == 270)
+                    {
+                        pathStack.Push((mid_point, -90, 90));
+                    }
+                    else
+                    {
+                        pathStack.Push((mid_point, transform.rotation.eulerAngles.y, 90));
+                    }
                     right_open = false;
-                    right_open_counter = 0; 
+                    right_open_counter = 0;
                 }
+                just_turned_right = false;
             }
             else
             {
-                if(!right_open && (currentState == State.Exploring))
+                if (!right_open && (currentState == State.Exploring) && !Physics.Raycast(rayForward, sideRayDistance) && !just_turned_right)
                 {
                     open_right_position = position;
                     right_open = true;
@@ -182,4 +229,5 @@ public class PlayerMovement : MonoBehaviour
         Gizmos.DrawRay(transform.position, -transform.right * 2f);
         Gizmos.DrawRay(transform.position, transform.right * 2f);
     }
+
 }
