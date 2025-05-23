@@ -59,22 +59,22 @@ This project modifies the traditional Depth-First Search (DFS) to suit an online
 
 # How It Works
 
-- Exploring Phase:
+* Exploring Phase:
 
-* The agent moves forward until it hits an obstacle.
+  * The agent moves forward until it hits an obstacle.
 
-* If a left or right opening is detected, the mid-point is stored on a stack along with the turning angle.
+  * If a left or right opening is detected, the mid-point is stored on a stack along with the turning angle.
 
-* When no forward path exists, the agent rotates to explore open sides.
+  * When no forward path exists, the agent rotates to explore open sides.
 
-- Backtracking Phase:
+* Backtracking Phase:
 
-* If all directions are blocked, the agent pops a position from the stack and returns to that location.
+  * If all directions are blocked, the agent pops a position from the stack and returns to that location.
 
-* On reaching the stored point, it rotates to the stored direction and resumes exploration.
+  * On reaching the stored point, it rotates to the stored direction and resumes exploration.
 
-- Continuous Adjustment:
+* Continuous Adjustment:
 
-* The agent constantly checks distances to the left and right walls and re-centers itself between them using vector interpolation.
+  * The agent constantly checks distances to the left and right walls and re-centers itself between them using vector interpolation.
 
-# Video Demo
+  # Video Demo
