@@ -96,4 +96,4 @@ This project modifies the traditional Depth-First Search (DFS) to suit an online
   <img src="Images/Case7.png" alt="Corner Case 7" width="250px" height="250px"/>
 
 # Video Demo
-[![Watch the video](Images/Case1.png)](Video/AI_seach_DFS.mp4)
+[![Watch the video](Images/AI_search_DFS.png)](https://raw.githubusercontent.com/moreharsh/AI_Agent_Navigation_using_Online_DFS/main/Video/AI_seach_DFS.mp4)
