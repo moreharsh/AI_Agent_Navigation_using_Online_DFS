@@ -77,4 +77,23 @@ This project modifies the traditional Depth-First Search (DFS) to suit an online
 
   * The agent constantly checks distances to the left and right walls and re-centers itself between them using vector interpolation.
 
-  # Video Demo
+
+# Imgaes:
+ Following cases were considered while working on this project:
+ - T intersection: 
+  <img src="Images/Case1.png" alt="Corner Case 1" width="250px" height="250px"/>
+ - Straight path:
+  <img src="Images/Case2.png" alt="Corner Case 2" width="250px" height="250px"/>
+ - H intersection:
+  <img src="Images/Case3.png" alt="Corner Case 3" width="250px" height="250px"/>
+ - Right turn:
+  <img src="Images/Case4.png" alt="Corner Case 4" width="250px" height="250px"/>
+ - Left turn:
+  <img src="Images/Case5.png" alt="Corner Case 5" width="250px" height="250px"/>
+ - No path ahead (Blocked):
+  <img src="Images/Case6.png" alt="Corner Case 6" width="250px" height="250px"/>
+ - Crossroad:
+  <img src="Images/Case7.png" alt="Corner Case 7" width="250px" height="250px"/>
+
+# Video Demo
+[![Watch the video](Images/Case1.png)](Video/AI_seach_DFS.mp4)
